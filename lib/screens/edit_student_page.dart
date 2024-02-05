@@ -1,21 +1,22 @@
 import 'dart:io';
 
+import 'package:db2/provider/student_provider.dart';
 import 'package:db2/screens/student_list_page.dart';
 import 'package:flutter/material.dart';
 
 import 'package:db2/model/student_model.dart';
 import 'package:db2/db/database_helper.dart';
+import 'package:provider/provider.dart';
 
-class EditStudentPage extends StatefulWidget {
+class EditStudentPage extends StatelessWidget {
+  EditStudentPage({super.key, required this.student}) {
+    _nameController.text = student.name;
+    _ageController.text = student.age.toString();
+    _genderController.text = student.gender;
+    _rollnumberController.text = student.rollnumber.toString();
+  }
   final Student student;
 
-  EditStudentPage({required this.student});
-
-  @override
-  _EditStudentPageState createState() => _EditStudentPageState();
-}
-
-class _EditStudentPageState extends State<EditStudentPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _ageController = TextEditingController();
@@ -23,22 +24,14 @@ class _EditStudentPageState extends State<EditStudentPage> {
   final _rollnumberController = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    _nameController.text = widget.student.name;
-    _ageController.text = widget.student.age.toString();
-    _genderController.text = widget.student.gender;
-    _rollnumberController.text = widget.student.rollnumber.toString();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    DatabaseHelper datahelp = DatabaseHelper();
+    final studentProvider = Provider.of<StudentProvider>(context, listen: true);
+    final updatedStudent = studentProvider.allStudent
+        .firstWhere((element) => element.id == student.id);
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: const Text('Edit Student'),
+        title: Text('Edit Student ${updatedStudent.name}'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -50,12 +43,15 @@ class _EditStudentPageState extends State<EditStudentPage> {
               CircleAvatar(
                 radius: 50.0,
                 backgroundImage:
-                    FileImage(File(widget.student.profilePicturePath)),
+                    FileImage(File(updatedStudent.profilePicturePath)),
               ),
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
                   labelText: 'Name',
                 ),
                 validator: (value) {
@@ -68,7 +64,10 @@ class _EditStudentPageState extends State<EditStudentPage> {
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _ageController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
                   labelText: 'Age',
                 ),
                 validator: (value) {
@@ -82,7 +81,10 @@ class _EditStudentPageState extends State<EditStudentPage> {
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _genderController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
                   labelText: 'Gender',
                 ),
                 validator: (value) {
@@ -97,7 +99,12 @@ class _EditStudentPageState extends State<EditStudentPage> {
               ),
               TextFormField(
                 controller: _rollnumberController,
-                decoration: const InputDecoration(labelText: 'Rollnumber'),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  labelText: 'RollNumber',
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter rollnumber';
@@ -118,33 +125,34 @@ class _EditStudentPageState extends State<EditStudentPage> {
                     final age = int.parse(_ageController.text);
                     final rollnumber = int.parse(_rollnumberController.text);
 
-                    final updatedStudent = Student(
-                      id: widget.student.id,
+                    final updateStudent = Student(
+                      id: updatedStudent.id,
                       name: name,
                       age: age,
                       gender: _genderController.text,
                       rollnumber: rollnumber,
-                      profilePicturePath: widget.student.profilePicturePath,
+                      profilePicturePath: updatedStudent.profilePicturePath,
                     );
 
-                    datahelp.updateStudent(updatedStudent).then((id) {
-                      if (id > 0) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Student updated successfully')),
-                        );
-                       // getStudents();
-                        Navigator.of(context).push(MaterialPageRoute(builder: (context)=>StudentListPage()));
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Failed to update student')),
-                        );
-                      }
-                    });
+                    studentProvider.updateStudent(updateStudent);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Student updated successfully'),
+                      ),
+                    );
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => StudentList(),
+                      ),
+                    );
                   }
                 },
-                child: const Text('Save Student'),
+                child: const Text(
+                  'Save Student',
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ],
           ),

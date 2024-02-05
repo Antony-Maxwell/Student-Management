@@ -1,12 +1,13 @@
 import 'dart:io';
 
+import 'package:db2/provider/student_provider.dart';
 import 'package:db2/screens/student_list_page.dart';
 import 'package:flutter/material.dart';
 
 import 'package:db2/screens/edit_student_page.dart';
 import 'package:db2/model/student_model.dart';
 import 'package:db2/db/database_helper.dart';
-import 'package:path/path.dart';
+import 'package:provider/provider.dart';
 
 class StudentDetailPage extends StatelessWidget {
   final Student student;
@@ -16,9 +17,9 @@ class StudentDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final studentProvider = Provider.of<StudentProvider>(context,listen: false);
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black,
         title: const Text('Student Details'),
         actions: [
           IconButton(
@@ -40,10 +41,10 @@ class StudentDetailPage extends StatelessWidget {
                     TextButton(
                       child: const Text('Delete'),
                       onPressed: () {
-                        db.deleteStudent(student.id);
+                        studentProvider.deleteStudent(student.id);
                         Navigator.of(context).pushAndRemoveUntil(
                             MaterialPageRoute(
-                                builder: (context) => StudentListPage()),
+                                builder: (context) => StudentList()),
                             (route) => false);
                       },
                     ),
@@ -65,7 +66,7 @@ class StudentDetailPage extends StatelessWidget {
           ),
         ],
       ),
-      backgroundColor: const Color.fromARGB(255, 215, 215, 215),
+      backgroundColor: Colors.white,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

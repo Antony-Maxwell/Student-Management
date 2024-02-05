@@ -31,12 +31,12 @@ dependencies:
   cupertino_icons: ^1.0.2
   flutter:
     sdk: flutter
-  path: ^1.8.3
-  sqflite: ^2.2.8+4
   image_picker: ^0.8.7+5
+  path: ^1.8.3
+  provider: ^6.1.1
+  sqflite: ^2.2.8+4
 
 dev_dependencies:
-  flutter_lints: ^2.0.0
   flutter_test:
     sdk: flutter
 

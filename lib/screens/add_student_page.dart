@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:db2/provider/student_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -7,17 +8,11 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:db2/model/student_model.dart';
 import 'package:db2/db/database_helper.dart';
+import 'package:provider/provider.dart';
 
-class AddStudentPage extends StatefulWidget {
-  final DatabaseHelper databaseHelper;
+class AddStudentPage extends StatelessWidget {
 
-  AddStudentPage({required this.databaseHelper});
-
-  @override
-  _AddStudentPageState createState() => _AddStudentPageState();
-}
-
-class _AddStudentPageState extends State<AddStudentPage> {
+  AddStudentPage({super.key});
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _parentnameController = TextEditingController();
@@ -28,13 +23,12 @@ class _AddStudentPageState extends State<AddStudentPage> {
   XFile? image;
   @override
   Widget build(BuildContext context) {
+      final studentProvider = Provider.of<StudentProvider>(context, listen: false);
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        backgroundColor: Colors.black,
         title: const Text('Add Student'),
       ),
-      backgroundColor: Colors.grey,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -46,17 +40,15 @@ class _AddStudentPageState extends State<AddStudentPage> {
                 onTap: () async {
                   XFile? img = await ImagePicker()
                       .pickImage(source: ImageSource.gallery);
-                  setState(() {
-                    image = img;
-                  });
-                  _profilePicturePath = image!.path;
+                      Provider.of<StudentProvider>(context,listen: false).updateProfilePicture(img?.path);
+                      _profilePicturePath = img!.path;
                 },
                 child: CircleAvatar(
                   radius: 50.0,
-                  backgroundImage: _profilePicturePath != null
-                      ? FileImage(File(_profilePicturePath!))
+                  backgroundImage: Provider.of<StudentProvider>(context).profilePicture != null
+                      ? FileImage(File(Provider.of<StudentProvider>(context).profilePicture!))
                       : null,
-                  child: _profilePicturePath == null
+                  child: Provider.of<StudentProvider>(context).profilePicture == null
                       ? const Icon(Icons.add_a_photo)
                       : null,
                 ),
@@ -64,11 +56,12 @@ class _AddStudentPageState extends State<AddStudentPage> {
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                    labelText: 'Name',
-                    labelStyle: TextStyle(
-                      color: Colors.white,
-                    )),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  labelText: 'Name',
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a name';
@@ -79,26 +72,28 @@ class _AddStudentPageState extends State<AddStudentPage> {
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _parentnameController,
+                maxLines: 3,
                 decoration: InputDecoration(
-                    labelText: 'Address',
-                    labelStyle: TextStyle(
-                      color: Colors.white,
-                    )),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  labelText: 'Address',
+                ),
               ),
               SizedBox(
                 height: 15,
               ),
               TextFormField(
                 controller: _ageController,
-                maxLines: 2,
                 inputFormatters: [
                   LengthLimitingTextInputFormatter(2),
                 ],
-                decoration: const InputDecoration(
-                    labelText: 'Age',
-                    labelStyle: TextStyle(
-                      color: Colors.white,
-                    )),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  labelText: 'Age',
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter an age';
@@ -110,11 +105,12 @@ class _AddStudentPageState extends State<AddStudentPage> {
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _genderController,
-                decoration: const InputDecoration(
-                    labelText: 'Gender',
-                    labelStyle: TextStyle(
-                      color: Colors.white,
-                    )),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  labelText: 'Gender',
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a gender';
@@ -127,11 +123,12 @@ class _AddStudentPageState extends State<AddStudentPage> {
               ),
               TextFormField(
                 controller: _rollnumberController,
-                decoration: const InputDecoration(
-                    labelText: 'Rollnumber',
-                    labelStyle: TextStyle(
-                      color: Colors.white,
-                    )),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  labelText: 'RollNumber',
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your rollnumber';
@@ -158,28 +155,22 @@ class _AddStudentPageState extends State<AddStudentPage> {
                       rollnumber: rollnumber,
                       profilePicturePath: _profilePicturePath ?? '',
                     );
-                    widget.databaseHelper.insertStudent(student).then((id) {
-                      if (id > 0) {
-                        final _succes = ' added successfully';
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            behavior: SnackBarBehavior.floating,
-                            content: Text('${name}' + _succes),
-                          ),
-                        );
-                        Navigator.pop(context);
-                      } else {
-                        final _error = 'Failed to add student';
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${name}' + _error),
-                          ),
-                        );
-                      }
-                    });
+                    studentProvider.addStudent(student);
+                    Navigator.pop(context);
+                    studentProvider.clearProfilePicture();
+                    _profilePicturePath = null;
+                    _nameController.clear();
+                    _ageController.clear();
+                    _genderController.clear();
+                    _rollnumberController.clear();
+                    _parentnameController.clear();
                   }
                 },
-                child: const Text('Save Student'),
+                child: const Text('Save Student',
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
                 ),
